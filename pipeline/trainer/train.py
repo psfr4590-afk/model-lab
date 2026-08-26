@@ -200,7 +200,6 @@ class Trainer:
             try:
                 from tokenizers import Tokenizer
                 tokenizer = Tokenizer.from_file(str(tok_path))
-                bos_id    = tokenizer.token_to_id("<|bos|>") or 1
             except Exception:
                 tokenizer = None
 

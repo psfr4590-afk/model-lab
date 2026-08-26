@@ -36,7 +36,7 @@ def datasets(): return status()
 @app.post("/api/datasets")
 def create(x:DatasetCreate):
     try:return add(x.name,x.description,x.group_id)
-    except Exception as e: raise HTTPException(400,str(e))
+    except Exception as e: raise HTTPException(400,str(e)) from e
 @app.get("/api/datasets/{did}")
 def dataset(did:int):
     d=status(did)
@@ -45,11 +45,11 @@ def dataset(did:int):
 @app.post("/api/datasets/{did}/ingest")
 def ingest_api(did:int,x:IngestRequest):
     try:return ingest(did,x.path)
-    except FileNotFoundError as e: raise HTTPException(404,str(e))
+    except FileNotFoundError as e: raise HTTPException(404,str(e)) from e
 @app.post("/api/datasets/{did}/stage/{name}")
 def run_stage(did:int,name:str):
     try:return stage(did,name)
-    except Exception as e: raise HTTPException(400,str(e))
+    except Exception as e: raise HTTPException(400,str(e)) from e
 @app.post("/api/datasets/{did}/stop")
 def stop_stage(did:int): return {"stopped":stop(did)}
 
@@ -60,7 +60,7 @@ def system_api():
     import os, platform, shutil, subprocess, sys
     out={"platform":platform.platform(),"python":sys.version.split()[0],"python_executable":sys.executable,"cpu":os.cpu_count(),"git":shutil.which("git") or "NOT FOUND","cmake":shutil.which("cmake") or "NOT FOUND","nvidia_smi":shutil.which("nvidia-smi") or "NOT FOUND"}
     try:
-        r=subprocess.run(["nvidia-smi","--query-gpu=name,driver_version,memory.total,memory.free","--format=csv,noheader"],capture_output=True,text=True,timeout=5)
+        r=subprocess.run(["nvidia-smi","--query-gpu=name,driver_version,memory.total,memory.free","--format=csv,noheader"],capture_output=True,text=True,timeout=5,check=False)
         out["gpu"]=r.stdout.strip() if r.returncode==0 else "UNAVAILABLE"
     except Exception:
         out["gpu"]="UNAVAILABLE"
@@ -79,13 +79,13 @@ def credentials_api():
 @app.post("/api/credentials")
 def credentials_set_api(x:CredentialSet):
     try: return credential_set(x.name, x.secret, x.provider, x.kind, x.env_var, x.description, x.identity)
-    except Exception as e: raise HTTPException(400, str(e))
+    except Exception as e: raise HTTPException(400, str(e)) from e
 
 @app.post("/api/credentials/{name}/test")
 def credentials_test_api(name:str):
     try: return credential_test(name)
-    except KeyError: raise HTTPException(404, "Credential not found")
-    except Exception as e: raise HTTPException(400, str(e))
+    except KeyError: raise HTTPException(404, "Credential not found") from None
+    except Exception as e: raise HTTPException(400, str(e)) from e
 
 @app.delete("/api/credentials/{name}")
 def credentials_delete_api(name:str):

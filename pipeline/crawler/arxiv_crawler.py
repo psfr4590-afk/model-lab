@@ -73,7 +73,7 @@ class ArxivCrawler(BaseCrawler):
 
         papers = []
         for entry in root.findall(f"{{{_ATOM_NS}}}entry"):
-            def tag(name, ns=_ATOM_NS):
+            def tag(name, ns=_ATOM_NS, entry=entry):
                 el = entry.find(f"{{{ns}}}{name}")
                 return el.text.strip() if el is not None and el.text else ""
 

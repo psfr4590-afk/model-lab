@@ -1621,7 +1621,7 @@ def main() -> None:
                 stage,
             )
 
-            raise SystemExit(130)
+            raise SystemExit(130) from None
 
         except Exception as exc:
             log.error(

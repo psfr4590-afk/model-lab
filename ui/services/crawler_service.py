@@ -34,7 +34,7 @@ class CrawlerService:
         try:
             p = subprocess.run(
                 ["powershell", "-NoProfile", "-Command", cmd],
-                capture_output=True, text=True, timeout=15,
+                capture_output=True, text=True, timeout=15, check=False,
             )
             out = p.stdout.strip()
             return out if out else "No crawler processes detected."

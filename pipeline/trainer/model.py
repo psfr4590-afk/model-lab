@@ -104,7 +104,7 @@ def precompute_freqs(dim: int, seq_len: int, theta: float = 10000.0,
 def apply_rope(x: torch.Tensor, cos: torch.Tensor, sin: torch.Tensor) -> torch.Tensor:
     # x: (B, T, n_heads, head_dim)
     # cos/sin: (T, head_dim//2) from precompute_freqs
-    B, T, H, D = x.shape
+    _, T, _, D = x.shape
     half = D // 2
     x1 = x[..., :half]           # (B, T, H, half)
     x2 = x[..., half:]           # (B, T, H, half)
@@ -245,7 +245,7 @@ class LlamaModel(nn.Module):
 
     def forward(self, idx: torch.Tensor,
                 targets: Optional[torch.Tensor] = None) -> tuple[torch.Tensor, Optional[torch.Tensor]]:
-        B, T = idx.shape
+        _, T = idx.shape
         assert T <= self.cfg.seq_len, f"Sequence length {T} > max {self.cfg.seq_len}"
 
         cos = self.rope_cos[:T]

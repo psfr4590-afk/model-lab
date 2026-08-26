@@ -93,7 +93,7 @@ def _jsonl_read(path: Path) -> Iterator[Document]:
                 bad += 1
                 log.error(f"Invalid JSONL record {path}:{line_no}: {exc}")
                 if bad > max_bad:
-                    raise RuntimeError(f"Input integrity failure: {bad} malformed records in {path}")
+                    raise RuntimeError(f"Input integrity failure: {bad} malformed records in {path}") from exc
     if bad:
         log.warning(f"Skipped {bad} malformed records from {path}")
 
@@ -144,7 +144,6 @@ class Pipeline:
         self._resume = self.cfg["pipeline"].get("resume", True)
 
         # Shared helpers
-        weight_cfg  = self.cfg.get("crawl", {})
         weights_file = self._project_root / "config" / "source_weights.yaml"
         self._weights  = SourceWeightLookup(str(weights_file))
         self._signals  = DomainSignalTracker(self._weights.signal_gate_config())
@@ -436,7 +435,7 @@ class Pipeline:
         if not __import__("torch").cuda.is_available() and not bool(train_cfg.get("allow_cpu_training", False)):
             raise RuntimeError("CUDA is unavailable and allow_cpu_training=false. Refusing accidental CPU pretraining; set train.allow_cpu_training=true or use bootstrap's CPU-safe model settings.")
         trainer = Trainer(self.cfg)
-        model, step = trainer.run()
+        trainer.run()
         best = sorted(ckpt_dir.glob("ckpt_best_*.pt"))
         return best[-1] if best else sorted(ckpt_dir.glob("ckpt_*.pt"))[-1]
 
@@ -448,7 +447,7 @@ class Pipeline:
         model_name = self.cfg.get("export", {}).get("model_name", "pretrain-model")
         mf = gguf_dir / "Modelfile"
         if self._resume and mf.exists():
-            log.info(f"[export] Modelfile exists, skipping")
+            log.info("[export] Modelfile exists, skipping")
             return
 
         # Import and call export directly without mutating sys.argv
