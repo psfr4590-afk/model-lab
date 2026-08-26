@@ -1,0 +1,45 @@
+# ── Core ────────────────────────────────────────────────────────────────────
+pyyaml>=6.0
+requests>=2.31
+beautifulsoup4>=4.12
+lxml>=5.0
+numpy>=1.24
+
+# ── Tokenizer ────────────────────────────────────────────────────────────────
+tokenizers>=0.19          # HuggingFace BPE trainer
+
+# ── Semantic dedup ────────────────────────────────────────────────────────────
+sentence-transformers>=3.0
+faiss-cpu>=1.8.0          # swap for faiss-gpu if you get a bigger GPU later
+
+# ── HuggingFace dataset crawler ───────────────────────────────────────────────
+datasets>=2.19
+huggingface_hub>=0.23
+
+# ── Optional: full PDF text extraction from ArXiv ────────────────────────────
+# pdfminer.six>=20221105
+
+# ── Optional: MinHash dedup (datasketch) ─────────────────────────────────────
+# datasketch>=1.6
+
+packaging>=23.0
+
+# ── Local Command Center ────────────────────────────────────────────────────
+fastapi==0.133.1
+starlette==1.3.1
+uvicorn>=0.30
+jinja2>=3.1
+pydantic>=2.0
+
+# Local credential encryption fallback for non-Windows hosts
+cryptography>=42.0
+
+# Test client compatibility: pinned to the verified FastAPI/Starlette environment.
+httpx==0.28.1
+
+# ── Optional crawler upgrades ──────────────────────────────────────────────
+# Superior boilerplate removal — ACL 2021 benchmark winner; falls back to bs4 if absent
+# trafilatura>=1.12
+
+# Language detection for english_only gating in web_crawler
+# langdetect>=1.0.9

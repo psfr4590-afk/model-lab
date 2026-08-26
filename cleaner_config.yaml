@@ -1,0 +1,112 @@
+# ── Data Cleaner Configuration ──────────────────────────────────────────────
+
+general:
+  action: drop
+  score_threshold: 0.12
+  min_doc_length: 80
+  max_doc_length: 2000000
+
+logging:
+  enabled: true
+  level: INFO
+  log_file: "output/logs/cleaner.log"
+  log_matched_text: true
+  log_doc_preview: 120
+
+html:
+  enabled: true
+  parser: lxml
+
+unicode:
+  enabled: true
+  normalize_form: NFKC
+  strip_control_chars: true
+
+dedup:
+  enabled: true
+  method: exact_hash
+
+refusal_filter:
+  enabled: true
+
+  pattern_groups:
+
+    hard_refusals:
+      enabled: true
+      weight: 1.0
+      patterns:
+        - "i (can't|cannot|won't|will not|am unable to) (help|assist|answer|provide|do|complete|fulfill|support)"
+        - "i('m| am) not able to"
+        - "i('m| am) unable to"
+        - "i must (decline|refuse)"
+        - "i (decline|refuse) to"
+        - "that('s| is) (not something i|something i (can|will) not)"
+        - "i('m| am) (not allowed|not permitted) to"
+        - "this (request |query )?(is|falls) (outside|beyond) (my|what i)"
+
+    ai_watermarks:
+      enabled: true
+      weight: 1.0
+      patterns:
+        - "as an ai( language)? model"
+        - "i('m| am) (an ai|a large language model|an llm|a chatbot|an artificial intelligence)"
+        - "i('m| am) claude"
+        - "i('m| am) chatgpt"
+        - "i('m| am) gpt-?(2|3|4|4o)?"
+        - "i('m| am) (bard|gemini|copilot|mistral ai|llama)"
+        - "openai('s)? (policy|guidelines|terms|usage)"
+        - "anthropic('s)? (policy|guidelines|terms|usage)"
+
+    safety_hedges:
+      enabled: true
+      weight: 0.7
+      patterns:
+        - "i (must|want to|need to|should) (caution|warn|note|point out|remind you|emphasize)"
+        - "it('s| is) important to (note|remember|consider|understand|be aware)"
+        - "please (be aware|note|keep in mind|remember) that"
+        - "i (strongly )?encourage you to"
+        - "(please )?(consult|speak (to|with)|see) a (professional|doctor|therapist|lawyer|expert|licensed)"
+        - "this (information|content|topic|request) (may|might|could) be (harmful|dangerous|sensitive)"
+
+    moral_grandstanding:
+      enabled: true
+      weight: 0.6
+      patterns:
+        - "this (is|would be|could be) (harmful|dangerous|unethical|inappropriate|illegal|irresponsible)"
+        - "(promoting|encouraging|facilitating) (harm|violence|illegal|unethical)"
+        - "i('m| am) (concerned|worried) about"
+        - "it('s| is) (not|never) okay to"
+        - "(this|that) crosses (a|the) line"
+        - "i (must|need to) (prioritize|ensure) (safety|your wellbeing|ethical)"
+
+    soft_deflections:
+      enabled: true
+      weight: 0.5
+      patterns:
+        - "instead,? (i('d| would) (suggest|recommend|encourage|like to))"
+        - "have you (considered|thought about)"
+        - "perhaps (you could|consider|try|a better)"
+        - "a (better|safer|healthier|more appropriate) (approach|alternative|option) (would|might) be"
+        - "i('d| would) (be happy to|love to) help (with|you) (something|a different|another)"
+
+    content_policy_language:
+      enabled: true
+      weight: 0.8
+      patterns:
+        - "(violates?|goes? against|contrary to) (my |our )?(guidelines|policy|policies|terms|content policy|usage policy)"
+        - "(community|content) (guidelines|standards|policies)"
+        - "terms of (service|use)"
+        - "acceptable use"
+        - "responsible (ai|use)"
+
+  instant_drop_patterns:
+    enabled: true
+    # Strong assistant-contamination signatures bypass density scoring.
+    patterns:
+      - '^\s*(i (can.t|cannot|won.t|will not|am unable to) (help|assist|answer|provide|do|complete|fulfill|support))\b'
+      - '^\s*(i must (decline|refuse)|i (decline|refuse) to)\b'
+      - '^\s*(as an ai( language)? model)\b'
+      - "this conversation (may be|is being) (monitored|recorded) for (safety|training)"
+      - "i('ve| have) been (trained|designed|programmed) (by|to)"
+      - "my (training|guidelines|instructions) (prevent|prohibit|don't allow)"
+      - "as a responsible ai"

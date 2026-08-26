@@ -1,0 +1,207 @@
+﻿# ── Master Pipeline Config ──────────────────────────────────────────────────
+# Controls the full pretrain-pipeline: crawl → clean → embed-dedup → weight → tokenize → shard
+
+pipeline:
+  name: "pretrain-v1"
+  output_dir: "output"
+  scratch_dir: "scratch"       # intermediate JSONL before final shards
+  resume: true                  # skip stages that already wrote output
+
+stages:
+  crawl:      true
+  clean:      true
+  embed_dedup: true
+  weight:     true
+  tokenize:   true
+  shard:      true
+  train:      true
+  export:     true
+
+crawl:
+  max_workers: 4
+  user_agent: "PretrainPipeline/1.1 (local research dataset builder)"
+  request_timeout: 15
+  retry_attempts: 3
+  retry_backoff: 2.0
+  respect_robots_txt: true
+  politeness_delay: 1.0        # seconds between requests to same domain
+  max_pages_per_domain: 500
+  max_content_bytes: 5_000_000 # skip pages > 5MB
+  max_redirects: 3
+  fail_on_malformed_jsonl: true
+
+  # Which of the 4 named datasets to crawl, and what each contains, lives in
+  # dataset_groups.yaml — this keeps topic/content decisions in one editable
+  # place instead of scattered across per-source blocks.
+  dataset_groups_file: "config/dataset_groups.yaml"
+
+  # Fallback source toggles — only used if dataset_groups_file is missing.
+  # Each group in dataset_groups.yaml sets its own `sources:` normally.
+  sources:
+    web:         true
+    github:      true
+    arxiv:       true
+    huggingface: true
+    google:      true   # no-ops safely until GOOGLE_API_KEY / GOOGLE_CX are set
+
+  # ── Shared/auth settings — apply to every dataset group ────────────────────
+  # Per-group topic settings (github.topics/languages/min_stars, arxiv.categories,
+  # huggingface.datasets, google.queries, web.seed_urls) live in dataset_groups.yaml.
+  github:
+    include_wikis: true
+    include_issues: true          # fetch closed issues as Q&A signal
+    max_issues_per_repo: 50       # cap per repo; avoids runaway on huge projects
+    token_env: "GITHUB_TOKEN"   # set in environment; crawler degrades to unauth if missing
+
+  arxiv:
+    fetch_full_text: false       # true = download PDF → text (slow, needs pdfminer)
+    fetch_abstract_only: true
+    enrich_citations: true        # query Semantic Scholar for citation counts (no key needed)
+
+  web:
+    seed_urls_file: "config/seed_urls.txt"   # shared general seeds, on top of each group's own
+    follow_links: true
+    max_depth: 3
+    stay_on_domain: false
+    use_sitemap_discovery: true   # auto-probe sitemap.xml for each seed domain
+    english_only: true            # skip non-English pages (requires: pip install langdetect)
+    url_allowlist_patterns:
+      - "github\\.com"
+      - "arxiv\\.org"
+      - "wikipedia\\.org"
+      - "readthedocs\\.io"
+      - "docs\\.python\\.org"
+      - "developer\\.mozilla\\.org"
+      - "stackoverflow\\.com/questions"
+      - "stackexchange\\.com"
+      - "paulgraham\\.com"
+      - "distill\\.pub"
+      - "lilianweng\\.github\\.io"
+      - "huggingface\\.co/blog"
+      - "openreview\\.net"
+      - "semanticscholar\\.org"
+      - "ncbi\\.nlm\\.nih\\.gov"
+      - "aclanthology\\.org"
+      - "owasp\\.org"
+    url_blocklist_patterns:
+      - "login"
+      - "signup"
+      - "register"
+      - "checkout"
+      - "cart"
+      - "facebook\\.com"
+      - "twitter\\.com"
+      - "instagram\\.com"
+      - "tiktok\\.com"
+      - "pinterest\\.com"
+      - "reddit\\.com/r/memes"
+      - "amazon\\.com"
+      - "ebay\\.com"
+
+  huggingface:
+    token_env: "HF_TOKEN"     # only needed for gated/private datasets
+
+  # Google Search discovery is OPTIONAL.
+  #
+  # If GOOGLE_API_KEY and GOOGLE_CX exist, `queries` can use
+  # Google Custom Search to discover URLs.
+  #
+  # If they do not exist, `seed_urls` still work.
+  google:
+    api_key_env: "GOOGLE_API_KEY"
+    cx_env: "GOOGLE_CX"
+
+    results_per_query: 10
+    max_pages_per_query: 10
+
+    # Direct public URLs require NO Google API credentials.
+    seed_urls: []
+
+    # Safety bound for directly supplied URLs.
+    max_seed_urls: 500
+clean:
+  config_file: "config/cleaner_config.yaml"
+
+embed_dedup:
+  model: "all-MiniLM-L6-v2"    # fast, 384-dim, runs on CPU fine
+  batch_size: 256
+  similarity_threshold: 0.92   # cosine; pairs above this → drop lower-scored doc
+  chunk_size: 512               # chars to embed per chunk (long docs → first N chars)
+  index_type: "flat"            # flat | ivf  (flat is exact, ivf is approx for >1M docs)
+  ivf_nlist: 100                # only used if index_type=ivf
+
+weight:
+  config_file: "config/source_weights.yaml"
+  strategy: upsample            # upsample | downsample | both
+  # upsample: repeat high-weight docs
+  # downsample: probabilistically drop low-weight docs
+  # both: combination
+
+tokenizer:
+  type: bpe                     # bpe only for now
+  vocab_size: 32000
+  min_frequency: 2
+  special_tokens:
+    - "<|pad|>"
+    - "<|unk|>"
+    - "<|bos|>"
+    - "<|eos|>"
+    - "<|sep|>"
+    - "<|mask|>"
+  train_on_sample: true         # train tokenizer on random sample of corpus, not all
+  sample_size: 500000           # docs to sample for tokenizer training
+  output_path: "output/tokenizer"
+
+shard:
+  sequence_length: 1024
+  dtype: uint16                 # uint16 supports vocab ≤ 65535; use uint32 if larger
+  shard_size_tokens: 10_000_000 # tokens per shard file
+  output_dir: "output/shards"
+  val_fraction: 0.005           # fraction of shards → validation set
+  shuffle_docs: true
+  seed: 42
+
+train:
+  resume: true                  # auto-resume from latest checkpoint if found
+  allow_cpu_training: false     # refuse accidental long CPU pretraining
+  model_preset: "85M"          # 85M | 117M | 360M — see model.py for VRAM requirements
+  vocab_size: 32000
+  seq_len: 1024
+  dropout: 0.0
+
+  # Optimizer
+  lr_max: 3.0e-4
+  lr_min: 3.0e-5
+  weight_decay: 0.1
+  grad_clip: 1.0
+
+  # Batch / accumulation
+  # Effective batch = batch_size × grad_accum_steps × seq_len tokens
+  # GTX 1650 safe defaults: batch_size=1, grad_accum=16 → 16K tokens/step
+  batch_size: 1
+  grad_accum_steps: 16
+
+  # Schedule
+  total_steps: 100000           # increase for larger corpora
+  warmup_steps: 2000
+
+  # Eval + checkpointing
+  eval_every_steps: 500
+  eval_batches: 20              # number of val batches per eval
+  checkpoint_every_steps: 1000  # interval checkpoint (pruned to keep_checkpoints)
+  keep_checkpoints: 3           # how many interval checkpoints to retain (+ best always kept)
+  generate_every_steps: 2000    # 0 = disable sample generation during training
+
+  shard_dir: "output/shards"
+
+export:
+  llamacpp_dir: "llama.cpp"
+  quant: "Q4_K_M"              # Q4_K_M | Q5_K_M | Q8_0 | F16
+  model_name: "pretrain-model"
+
+command_center:
+  host: "127.0.0.1"
+  port: 8000
+  auto_seed_datasets: true
+
+

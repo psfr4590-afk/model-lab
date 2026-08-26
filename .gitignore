@@ -1,0 +1,67 @@
+# Python bytecode and interpreter caches
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Test and lint caches
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.pyre/
+.pytype/
+.coverage
+coverage.xml
+htmlcov/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+config/.env
+config/.env.*
+!config/.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Local runtime state, logs, and transient files
+.runtime/
+*.log
+*.tmp
+*.temp
+*.pid
+
+# Generated pipeline data and training artifacts
+datasets/
+output/
+scratch/
+checkpoints/
+models/
+*.ckpt
+*.pt
+*.pth
+*.safetensors
+*.bin
+*.gguf
+
+# Backup and diagnostic artifacts
+*.bak
+*.bak.*
+scripts/_audit_out.txt
+scripts/_probe_out.txt
+scripts/_repair_out.txt
+
+# Editor and operating-system metadata
+.vscode/
+.idea/
+*.code-workspace
+.DS_Store
+Thumbs.db
+desktop.ini

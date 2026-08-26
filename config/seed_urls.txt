@@ -1,0 +1,29 @@
+# Seed URLs — one per line, comments with #
+# Web crawler starts here and follows links up to max_depth
+
+# Research / papers
+https://arxiv.org/list/cs.AI/recent
+https://arxiv.org/list/cs.LG/recent
+https://arxiv.org/list/cs.CL/recent
+https://distill.pub
+https://lilianweng.github.io
+https://openreview.net
+
+# Technical documentation
+https://docs.python.org/3/
+https://developer.mozilla.org/en-US/docs/Web
+https://doc.rust-lang.org/book/
+
+# Technical writing
+https://paulgraham.com/articles.html
+https://huggingface.co/blog
+
+# Q&A
+https://stackoverflow.com/questions?tab=votes&pagesize=50
+https://cs.stackexchange.com/questions?tab=votes
+https://stats.stackexchange.com/questions?tab=votes
+
+# Wikipedia portals (crawler will follow from here)
+https://en.wikipedia.org/wiki/Portal:Mathematics
+https://en.wikipedia.org/wiki/Portal:Computer_science
+https://en.wikipedia.org/wiki/Portal:Science

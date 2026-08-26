@@ -1,0 +1,192 @@
+# ── Dataset Groups ──────────────────────────────────────────────────────────
+# Each group is crawled, resumed, and tracked independently — a stall or
+# interruption in one group no longer blocks/hides the others (previously
+# the whole crawl stage was a single resumable unit, which is why it looked
+# "stuck" on the first dataset).
+#
+# Every doc gets tagged doc.meta["dataset_group"] = <id> so you can filter,
+# rebalance, or weight the four datasets differently downstream.
+#
+# `sources` here toggles which crawlers run for THIS group (independent of
+# the others). Empty/omitted `huggingface.datasets`, `github.topics`,
+# `google.queries`, or `web.seed_urls` just means that crawler yields nothing
+# for this group. Edit freely — these are starting points, not a final list.
+
+dataset_groups:
+
+  # ── 1. Software Engineering + Computer Science + Systems Engineering ──────
+  - id: "swe_cs_systems"
+    name: "Software Engineering + Computer Science + Systems Engineering"
+    sources: {web: true, github: true, arxiv: true, huggingface: true, google: true}
+
+    github:
+      min_stars: 100
+      languages: [C, "C++", Rust, Go, Python, Zig, Java]
+      topics:
+        - operating-systems
+        - compilers
+        - distributed-systems
+        - databases
+        - networking
+        - systems-programming
+        - software-architecture
+        - algorithms
+        - data-structures
+      max_repos: 300
+
+    arxiv:
+      categories: [cs.SE, cs.OS, cs.DC, cs.AR, cs.DS, cs.PL]
+      max_results_per_category: 500
+
+    huggingface:
+      datasets:
+        - repo: "bigcode/the-stack-dedup"
+          config: null
+          split: "train"
+          text_field: "content"
+          max_docs: 15000
+        - repo: "codeparrot/github-code"
+          config: null
+          split: "train"
+          text_field: "code"
+          max_docs: 10000
+
+    google:
+      queries:
+        - "distributed systems consensus algorithms explained"
+        - "operating system kernel design principles"
+        - "software architecture patterns case study"
+
+    web:
+      seed_urls:
+        - "https://docs.python.org/3/"
+        - "https://en.wikipedia.org/wiki/Systems_engineering"
+
+  # ── 2. AI/ML + Cybersecurity + Data Engineering ────────────────────────────
+  - id: "ai_ml_cybersec_dataeng"
+    name: "AI/ML + Cybersecurity + Data Engineering"
+    sources: {web: true, github: true, arxiv: true, huggingface: true, google: true}
+
+    github:
+      min_stars: 100
+      languages: [Python, "C++", Rust, Go]
+      topics:
+        - machine-learning
+        - deep-learning
+        - mlops
+        - data-engineering
+        - etl
+        - data-pipelines
+        - network-security
+        - application-security
+        - threat-detection
+      max_repos: 300
+
+    arxiv:
+      categories: [cs.LG, cs.AI, cs.CL, cs.CR, cs.DB]
+      max_results_per_category: 800
+
+    huggingface:
+      datasets:
+        - repo: "HuggingFaceFW/fineweb-edu"
+          config: "sample-10BT"
+          split: "train"
+          text_field: "text"
+          max_docs: 10000
+        - repo: "glaiveai/glaive-function-calling-v2"
+          config: null
+          split: "train"
+          text_field: "chat"
+          max_docs: 5000
+
+    google:
+      queries:
+        - "machine learning system design interview"
+        - "common web application vulnerabilities explained"
+        - "data engineering pipeline best practices"
+
+    web:
+      seed_urls:
+        - "https://huggingface.co/blog"
+        - "https://owasp.org/www-project-top-ten/"
+
+  # ── 3. Scientific Reasoning + Digital Forensics + Formal Methods ──────────
+  - id: "sci_reasoning_forensics_formal"
+    name: "Scientific Reasoning + Digital Forensics + Formal Methods"
+    sources: {web: true, github: true, arxiv: true, huggingface: true, google: true}
+
+    github:
+      min_stars: 50
+      languages: [Python, Coq, Lean, Haskell, "C++"]
+      topics:
+        - formal-verification
+        - theorem-proving
+        - model-checking
+        - digital-forensics
+        - incident-response
+        - reverse-engineering
+      max_repos: 200
+
+    arxiv:
+      categories: [cs.LO, cs.PL, cs.CR, math.ST, stat.ML, physics.data-an]
+      max_results_per_category: 600
+
+    huggingface:
+      datasets:
+        - repo: "qiaojin/PubMedQA"
+          config: "pqa_labeled"
+          split: "train"
+          text_field: "question"
+          max_docs: 5000
+
+    google:
+      queries:
+        - "formal verification theorem proving tutorial"
+        - "digital forensics investigation methodology"
+        - "scientific reasoning hypothesis testing methods"
+
+    web:
+      seed_urls:
+        - "https://en.wikipedia.org/wiki/Formal_methods"
+        - "https://en.wikipedia.org/wiki/Digital_forensics"
+
+  # ── 4. Domain-specific: Finance + Biology + Robotics + etc. ────────────────
+  - id: "domain_finance_bio_robotics"
+    name: "Domain-specific knowledge: Finance + Biology + Robotics + etc."
+    sources: {web: true, github: true, arxiv: true, huggingface: true, google: true}
+
+    github:
+      min_stars: 50
+      languages: [Python, "C++"]
+      topics:
+        - quantitative-finance
+        - algorithmic-trading
+        - bioinformatics
+        - computational-biology
+        - robotics
+        - ros
+        - control-systems
+      max_repos: 200
+
+    arxiv:
+      categories: [q-fin.GN, q-bio.QM, cs.RO, eess.SY]
+      max_results_per_category: 500
+
+    huggingface:
+      datasets:
+        - repo: "gbharti/finance-alpaca"
+          config: null
+          split: "train"
+          text_field: "text"
+          max_docs: 5000
+
+    google:
+      queries:
+        - "quantitative finance risk modeling introduction"
+        - "computational biology genomics pipeline overview"
+        - "robotics control systems fundamentals"
+
+    web:
+      seed_urls:
+        - "https://en.wikipedia.org/wiki/Computational_biology"
+        - "https://en.wikipedia.org/wiki/Robotics"
