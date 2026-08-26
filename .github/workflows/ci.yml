@@ -25,6 +25,10 @@ jobs:
         # pip cache (keyed on requirements.txt hash) keeps subsequent runs fast.
         run: pip install -r requirements.txt
 
+      - name: Ruff lint report (informational)
+        run: |
+          python -m ruff check . || true
+
       - name: Compile check
         run: python -m compileall -q .
 

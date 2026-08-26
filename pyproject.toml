@@ -1,0 +1,45 @@
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+exclude = [
+    ".git",
+    ".pytest_cache",
+    ".ruff_cache",
+    ".runtime",
+    "__pycache__",
+    "datasets",
+    "output",
+    "scratch",
+    "scripts/_audit_encoding.py",
+    "scripts/_check_remaining.py",
+    "scripts/_diagnose_encoding.py",
+    "scripts/_fix_arrows.py",
+    "scripts/_fix_encoding.py",
+    "scripts/_fix_lte.py",
+    "scripts/_fix_shebang.py",
+    "scripts/_probe_encoding.py",
+    "scripts/_repair_encoding.py",
+    "scripts/_repair_encoding2.py",
+    "ui/screens/__init__.py.bak",
+    "ui/screens/__init__.py.bak.20260817_094313",
+]
+
+[tool.ruff.lint]
+select = [
+    "E",
+    "F",
+    "B",
+    "SIM115",
+    "PLW",
+    "RUF",
+]
+extend-select = [
+    "S110",
+]
+ignore = [
+    "N999",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S110", "PLW1510"]
+"scripts/**" = ["UP031"]
