@@ -71,14 +71,29 @@ def _dpapi_unprotect(value: bytes) -> bytes:
 
 
 def _fallback_fernet():
+    """Return a Fernet instance for non-Windows hosts.
+
+    Raises a RuntimeError with actionable instructions if cryptography is
+    missing or PIPELINE_CREDENTIAL_KEY is not set.
+    """
     try:
         from cryptography.fernet import Fernet
     except ImportError as exc:
-        raise RuntimeError("Non-Windows credential storage requires cryptography and PIPELINE_CREDENTIAL_KEY") from exc
+        raise RuntimeError(
+            "Non-Windows credential storage requires the 'cryptography' package. "
+            "Install it with: pip install cryptography"
+        ) from exc
     key = os.environ.get("PIPELINE_CREDENTIAL_KEY", "")
     if not key:
-        raise RuntimeError("PIPELINE_CREDENTIAL_KEY is required on non-Windows hosts")
-    return Fernet(key.encode())
+        raise RuntimeError(
+            "PIPELINE_CREDENTIAL_KEY is required on non-Windows hosts. "
+            "Generate one with: python -c \"from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())\" "
+            "and set the environment variable PIPELINE_CREDENTIAL_KEY to that value."
+        )
+    try:
+        return Fernet(key.encode())
+    except Exception as exc:
+        raise RuntimeError("PIPELINE_CREDENTIAL_KEY is invalid; ensure it is a valid Fernet key") from exc
 
 
 def _encrypt(value: str) -> str:
@@ -100,7 +115,11 @@ def _decrypt(value: str) -> str:
 
 
 class CredentialStore:
-    """Local credential store. Values are encrypted at rest and never exposed by list()."""
+    """Local credential store. Values are encrypted at rest and never exposed by list().
+
+    Use CredentialStore.check_usable() at startup to get a (ok,message) tuple that
+    can be surfaced to users instead of raising exceptions during app init.
+    """
 
     def __init__(self, path: Path = STORE_PATH):
         self.path = path
@@ -181,7 +200,7 @@ class CredentialStore:
             item = data["credentials"].get(name)
             if not item:
                 raise KeyError(name)
-            return _decrypt(item["secret"])
+            return _decrypt(item["secret")
 
     def environment(self) -> dict[str, str]:
         """Return only explicitly mapped secrets for child pipeline processes."""
