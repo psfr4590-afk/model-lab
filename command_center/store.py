@@ -7,7 +7,8 @@ from typing import Any
 from .config import DATASETS, ROOT, group_by_id, load_groups
 
 LOCK = RLock()
-SUBDIRS = ["raw","cleaned","dedup","weighted","tokenized","shards","checkpoints","model","agent","logs","metrics","errors"]
+# Added 'scratch' and 'tokenizer' to match pipeline artifact locations
+SUBDIRS = ["raw","scratch","cleaned","dedup","weighted","tokenized","tokenizer","shards","checkpoints","model","agent","logs","metrics","errors"]
 STAGES = ["crawl","clean","dedup","weight","tokenize","shard","train","export","model","agent"]
 
 
@@ -39,11 +40,13 @@ class DatasetStore:
 
     def create(self, name: str, description: str = "", group_id: str | None = None, group_config: dict | None = None):
         with LOCK:
-            did=self.next_id(); root=self.path(did); root.mkdir(parents=True)
-            for s in SUBDIRS: (root/s).mkdir()
+            did=self.next_id(); root=self.path(did); root.mkdir(parents=True, exist_ok=True)
+            # create all expected subdirectories; use exist_ok to be safe
+            for s in SUBDIRS: (root/s).mkdir(parents=True, exist_ok=True)
             if group_id:
                 group = group_by_id(group_id)
                 if not group: raise ValueError(f"Unknown dataset group: {group_id}")
+                # preserve provided group_id; group_config intentionally left as None for seeded groups
                 group_config = None
             else:
                 group = None
