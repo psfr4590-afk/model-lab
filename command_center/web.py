@@ -28,7 +28,10 @@ class CredentialSet(BaseModel):
     identity:str=""
 
 @app.get("/",response_class=HTMLResponse)
-def index(request:Request): return templates.TemplateResponse(request=request, name="index.html", context={})
+def index(request:Request):
+    # Jinja2Templates.TemplateResponse expects the template name first and a context dict
+    # that includes the request under the "request" key.
+    return templates.TemplateResponse("index.html", {"request": request})
 @app.get("/api/groups")
 def group_list(): return groups()
 @app.get("/api/datasets")
@@ -58,7 +61,7 @@ def stop_stage(did:int): return {"stopped":stop(did)}
 @app.get("/api/system")
 def system_api():
     import os, platform, shutil, subprocess, sys
-    out={"platform":platform.platform(),"python":sys.version.split()[0],"python_executable":sys.executable,"cpu":os.cpu_count(),"git":shutil.which("git") or "NOT FOUND","cmake":shutil.which("cmake") or "NOT FOUND","nvidia_smi":shutil.which("nvidia-smi") or "NOT FOUND"}
+    out={"platform":platform.platform(),"python":sys.version.split()[0],"python_executable":sys.executable,"cpu":os.cpu_count(),"git":shutil.which("git") or "NOT FOUND","cmake":shutil.which("cmake") or "NOT FOUND"}
     try:
         r=subprocess.run(["nvidia-smi","--query-gpu=name,driver_version,memory.total,memory.free","--format=csv,noheader"],capture_output=True,text=True,timeout=5,check=False)
         out["gpu"]=r.stdout.strip() if r.returncode==0 else "UNAVAILABLE"
