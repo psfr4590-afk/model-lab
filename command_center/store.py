@@ -7,7 +7,6 @@ from typing import Any
 from .config import DATASETS, ROOT, group_by_id, load_groups
 
 LOCK = RLock()
-# Added 'scratch' and 'tokenizer' to match pipeline artifact locations
 SUBDIRS = ["raw","scratch","cleaned","dedup","weighted","tokenized","tokenizer","shards","checkpoints","model","agent","logs","metrics","errors"]
 STAGES = ["crawl","clean","dedup","weight","tokenize","shard","train","export","model","agent"]
 
@@ -46,7 +45,6 @@ class DatasetStore:
             if group_id:
                 group = group_by_id(group_id)
                 if not group: raise ValueError(f"Unknown dataset group: {group_id}")
-                # preserve provided group_id; group_config intentionally left as None for seeded groups
                 group_config = None
             else:
                 group = None
@@ -72,7 +70,21 @@ class DatasetStore:
 
     def ensure_seed_datasets(self):
         groups = load_groups()
-        existing = {d.get("group_id") for d in self.list()}
+        # Build a tolerant set of existing group_ids; some older dataset files may
+        # have non-hashable values here (e.g. a dict). Normalize to string ids where possible.
+        existing = set()
+        for d in self.list():
+            try:
+                gid = d.get("group_id")
+            except Exception:
+                continue
+            if isinstance(gid, (str, int)):
+                existing.add(gid)
+            elif isinstance(gid, dict):
+                # try to extract an 'id' field
+                gid2 = gid.get("id") if isinstance(gid, dict) else None
+                if isinstance(gid2, (str, int)):
+                    existing.add(gid2)
         for g in groups:
             if g.get("id") not in existing:
                 self.create(g.get("name", g.get("id", "Dataset")), "Seeded from config/dataset_groups.yaml", group_id=g["id"])
